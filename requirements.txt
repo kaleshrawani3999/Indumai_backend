@@ -1,0 +1,6 @@
+Flask
+pandas
+scikit-learn
+mysql-connector-python
+razorpay
+gunicorn
