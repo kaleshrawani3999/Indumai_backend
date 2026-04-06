@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Products - Indumai Seeds & Dairymart</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#2D5A27',
+secondary: '#F4A460',
+cream: '#FFF8DC'
+}
+}
+}
+}
+</script>
+
+</head>
+
+<body class="bg-cream">
+
+
+<!-- NAVBAR -->
+<div class="bg-primary text-white p-4 flex justify-between items-center">
+
+    <!-- LOGO -->
+    <div class="flex items-center gap-3">
+        <img src="/static/images/logo.png" alt="Logo" class="h-10 w-10 rounded-full">
+        <h1 class="text-xl font-bold">Indumai</h1>
+    </div>
+
+    <div class="flex gap-4 items-center">
+
+        <a href="/" class="hover:text-secondary">Home</a>
+        <a href="/products" class="hover:text-secondary">Products</a>
+        <a href="/cart" class="hover:text-secondary">Cart</a>
+        <a href="/orders" class="hover:text-secondary">Orders</a>
+
+        {% if session.get('logged_in') %}
+            <a href="/logout" class="bg-red-500 px-3 py-1 rounded hover:bg-red-600">
+                Logout
+            </a>
+        {% else %}
+            <a href="/login" class="bg-green-500 px-3 py-1 rounded">
+                Login
+            </a>
+        {% endif %}
+
+    </div>
+</div>
+
+<!-- SEARCH BAR -->
+<div class="bg-white p-6 flex justify-center">
+<input
+type="text"
+id="searchInput"
+placeholder="Search seeds, fertilizers..."
+class="border p-3 rounded w-full max-w-md shadow"
+onkeyup="searchProducts()">
+</div>
+
+<!-- CATEGORY FILTER -->
+<div class="p-6 grid grid-cols-2 sm:grid-cols-3 md:flex gap-4 justify-center bg-white">
+
+<button onclick="filterCategory('all')" class="px-4 py-2 bg-primary text-white rounded">All</button>
+<button onclick="filterCategory('seeds')" class="px-4 py-2 border rounded">Seeds</button>
+<button onclick="filterCategory('fertilizers')" class="px-4 py-2 border rounded">Fertilizers</button>
+<button onclick="filterCategory('dairy')" class="px-4 py-2 border rounded">Dairy</button>
+<button onclick="filterCategory('vegetables')" class="px-4 py-2 border rounded">Vegetables</button>
+
+</div>
+
+<!-- PRODUCTS GRID -->
+<div id="products-container"
+class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4 p-4 max-w-7xl mx-auto"></div>
+
+<script>
+const productsData = JSON.parse('{{ products | tojson | safe }}');
+const isLoggedIn = {{ 'true' if is_logged_in else 'false' }};
+let currentProducts = productsData;
+
+function renderProducts(data){
+    const container = document.getElementById("products-container");
+    container.innerHTML = "";
+
+    data.forEach(product => {
+        container.innerHTML += `
+        <div class="bg-white p-3 rounded-xl shadow hover:shadow-xl transition relative">
+
+            <!-- WISHLIST -->
+            <button onclick="toggleWishlist(${product.id}, this)"
+            class="absolute top-2 right-2 bg-white p-2 rounded-full shadow text-xl hover:bg-red-100">
+            🤍
+            </button>
+
+            <img src="${product.image}" class="h-52 w-full object-cover mb-2 rounded">
+
+            <h3 class="font-bold text-sm">${product.name}</h3>
+
+            <p class="text-green-700 font-semibold">₹${product.price}</p>
+
+            <div class="text-yellow-400 text-sm mb-2">⭐⭐⭐⭐☆</div>
+
+            <div class="flex gap-2 mt-3">
+
+            ${isLoggedIn ? `
+                <a href="/add_to_cart/${product.id}" class="bg-primary text-white px-4 py-2 rounded flex-1 text-center hover:bg-green-900">
+                Add
+                </a>
+
+                <button onclick="window.location.href='/checkout/${product.id}'"
+                class="bg-green-600 text-white px-4 py-2 rounded flex-1">
+                Buy
+                </button>
+            ` : `
+                <a href="/login" class="bg-red-500 text-white px-4 py-2 rounded flex-1 text-center">
+                Login
+                </a>
+            `}
+
+            </div>
+        </div>
+        `;
+    });
+}
+
+function filterCategory(category){
+    if(category === "all"){
+        currentProducts = productsData;
+    } else {
+        currentProducts = productsData.filter(p => p.category === category);
+    }
+    renderProducts(currentProducts);
+}
+
+function searchProducts(){
+    const search = document.getElementById("searchInput").value.toLowerCase();
+    const filtered = currentProducts.filter(product =>
+        product.name.toLowerCase().includes(search)
+    );
+    renderProducts(filtered);
+}
+
+renderProducts(productsData);
+
+function toggleWishlist(productId, button){
+    fetch(`/toggle_wishlist/${productId}`)
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === "added") button.innerHTML = "❤️";
+        else if(data.status === "removed") button.innerHTML = "🤍";
+        else if(data.status === "login_required") window.location.href="/login";
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Orders - Indumai</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-6 font-sans">
+
+<h1 class="text-3xl font-bold mb-6 text-green-700">
+Your Orders
+</h1>
+
+{% if orders %}
+
+{% for order in orders %}
+
+<div class="bg-white p-6 rounded-lg shadow mb-6">
+
+<div class="flex justify-between">
+<div>
+<h2 class="text-xl font-bold">Order #{{ order.id }}</h2>
+<p class="text-gray-600">Placed on: {{ order.created_at }}</p>
+<p class="text-green-600 text-sm">Estimated Delivery: 3-5 Days</p>
+</div>
+
+<div class="text-right">
+<p class="font-semibold text-blue-600">
+Status: {{ order.status }}
+</p>
+</div>
+</div>
+
+<!-- Progress Bar -->
+<div class="w-full bg-gray-200 h-2 rounded mt-4">
+
+{% if order.status == 'Pending' %}
+<div class="bg-green-500 h-2 rounded w-1/4"></div>
+
+{% elif order.status == 'Shipped' %}
+<div class="bg-green-500 h-2 rounded w-2/4"></div>
+
+{% elif order.status == 'Out for Delivery' %}
+<div class="bg-green-500 h-2 rounded w-3/4"></div>
+
+{% elif order.status == 'Delivered' %}
+<div class="bg-green-500 h-2 rounded w-full"></div>
+{% endif %}
+
+</div>
+
+<hr class="my-4">
+
+<h3 class="font-semibold mb-2">Products:</h3>
+
+<ul class="list-disc pl-6">
+
+{% for item in order['items'] %}
+<li class="mb-4">
+
+<div class="flex items-center gap-4">
+
+<img src="{{ item.image }}"
+style="width: 90px; height: 90px; object-fit: contain;"
+class="border rounded p-1 bg-white">
+
+<div>
+<b>{{ item.name }}</b><br>
+Qty: {{ item.quantity }} <br>
+₹{{ item.price }}
+</div>
+
+</div>
+
+<!-- RETURN STATUS LOGIC -->
+
+{% if item.return_status == "accepted" %}
+
+<p class="text-green-600 text-sm font-semibold mt-2">
+✅ Approved
+</p>
+
+{% elif item.return_status == "rejected" %}
+
+<p class="text-red-600 text-sm font-semibold mt-2">
+❌ Rejected
+</p>
+
+{% elif item.return_status == "pending" %}
+
+<p class="text-yellow-600 text-sm font-semibold mt-2">
+⏳ Pending Approval
+</p>
+
+{% else %}
+
+    {% if order.status in ["Pending","Shipped","Delivered"] %}
+
+    <form method="POST"
+    action="{{ url_for('request_return', order_id=order.id, product_id=item.product_id) }}"
+    class="mt-2 flex gap-2">
+
+        <select name="type" class="border px-2 py-1 rounded">
+            <option value="Return">Return</option>
+            <option value="Exchange">Exchange</option>
+        </select>
+
+        <input type="text"
+        name="reason"
+        placeholder="Reason"
+        required
+        class="border px-2 py-1 rounded">
+
+        <button type="submit"
+        class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-700">
+        Request
+        </button>
+
+    </form>
+
+    {% endif %}
+
+{% endif %}
+
+</li>
+
+{% endfor %}
+
+</ul>
+
+<div class="mt-4">
+<a href="/track_order/{{ order.id }}"
+class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-800">
+Track Order
+</a>
+</div>
+
+</div>
+
+{% endfor %}
+
+{% else %}
+
+<p class="text-gray-600">
+You have no orders yet.
+</p>
+
+{% endif %}
+
+<a href="/products"
+class="mt-6 inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-800">
+Continue Shopping
+</a>
+
+</body>
+</html>
